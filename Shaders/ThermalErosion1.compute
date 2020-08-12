@@ -1,0 +1,48 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWStructuredBuffer<float> map;
+
+int gridSize;
+float amplitude;
+float cellSize;
+float tanAngle;
+
+int  resizeArray(int x, int j)
+{
+    return x * gridSize + j;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+
+    float maxDiff = 0;
+    int i = int(id.x);
+    int j = int(id.y);
+    for (int k = -1; k <= 1; k += 2)
+    {
+        for (int l = -1; l <= 1; l += 2)
+        {
+
+            int index = resizeArray(i + k, j + l);
+            float h = map[index];
+            float z = map[i * gridSize + j] - h;
+            if (z > maxDiff)
+            {
+                maxDiff = z;
+            }
+            if (maxDiff / cellSize > tanAngle)
+            {
+                map[i * gridSize + j] = map[i * gridSize + j] - amplitude;
+                map[k * gridSize + l] = map[k * gridSize + l] + amplitude;
+            }
+        }
+    }
+    
+    
+    
+}

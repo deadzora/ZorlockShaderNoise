@@ -1,0 +1,138 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWStructuredBuffer<float> map;
+RWStructuredBuffer<float3> windMap;
+
+int gridSize;
+float amplitude;
+float cellSize;
+float tanAngle;
+
+int topL;
+int top;
+int topR;
+int Right;
+int bottomR;
+int bottom;
+int bottomL;
+int Left;
+
+void FindNeighbor(int x, int y)
+{
+    topL = (x -1) * gridSize + (y +1);
+    top = x * gridSize + (y + 1);
+    topR = (x + 1) * gridSize + (y + 1);
+    Right = (x + 1) * gridSize + y;
+    bottomR = (x + 1) * gridSize + (y - 1);
+    bottom = x * gridSize + (y - 1);
+    bottomL = (x - 1) * gridSize + (y -1);
+    Left = (x - 1) * gridSize + y;
+}
+
+int  resizeArray(int x, int j)
+{
+    return x * gridSize + j;
+}
+
+float findDiff(float x, float y)
+{
+    return x - y;
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+
+    float Diff = 0;
+    int i = int(id.x);
+    int j = int(id.y);
+    int index = resizeArray(i, j);
+    FindNeighbor(i, j);
+    if (windMap[index].x > 0 && windMap[index].y > 0)
+    {
+        Diff = findDiff(map[index], map[topR]);
+        if (Diff >= 0)
+        {
+            map[index] -= amplitude * (windMap[index].z /100);
+            map[topR] += amplitude * (windMap[index].z / 100);
+            windMap[index].z += 2 * (windMap[index].z / 10);
+            windMap[top].z += 2 * (windMap[index].z / 10);
+            windMap[topR].z += 2 * (windMap[index].z / 10);
+            windMap[Right].z += 2 * (windMap[index].z / 10);
+        }
+        if (Diff < 0)
+        {
+            map[index] += amplitude * (windMap[index].z / 100);
+            windMap[index] -= amplitude * (windMap[index].z / 10);
+            windMap[top].z += 2 * (windMap[index].z / 10);
+            windMap[Right].z += 2 * (windMap[index].z / 10);
+        }
+    }
+
+    if (windMap[index].x > 0 && windMap[index].y < 0 )
+    {
+        Diff = findDiff(map[index], map[topR]);
+        if (Diff >= 0)
+        {
+            map[index] -= amplitude * (windMap[index].z / 100);
+            map[bottomR] += amplitude * (windMap[index].z / 100);
+            windMap[index].z += 2 * (windMap[index].z / 10);
+            windMap[Right].z += 2 * (windMap[index].z / 10);
+            windMap[bottomR].z += 2 * (windMap[index].z / 10);
+            windMap[bottom].z += 2 * (windMap[index].z / 10);
+        }
+        if (Diff < 0)
+        {
+            map[index] += amplitude * (windMap[index].z / 100);
+            windMap[index] -= amplitude * (windMap[index].z / 10);
+            windMap[Right].z += 2 * (windMap[index].z / 10);
+            windMap[bottom].z += 2 * (windMap[index].z / 10);
+        }
+    }
+
+    if (windMap[index].x < 0 && windMap[index].y < 0)
+    {
+        Diff = findDiff(map[index], map[topR]);
+        if (Diff >= 0)
+        {
+            map[index] -= amplitude * (windMap[index].z / 100);
+            map[bottomL] += amplitude * (windMap[index].z / 100);
+            windMap[index].z += 2 * (windMap[index].z / 10);
+            windMap[Left].z += 2 * (windMap[index].z / 10);
+            windMap[bottomL].z += 2 * (windMap[index].z / 10);
+            windMap[bottom].z += 2 * (windMap[index].z / 10);
+        }
+        if (Diff < 0)
+        {
+            map[index] += amplitude * (windMap[index].z / 100);
+            windMap[index] -= amplitude * (windMap[index].z / 10);
+            windMap[Left].z += 2 * (windMap[index].z / 10);
+            windMap[bottom].z += 2 * (windMap[index].z / 10);
+        }
+    }
+
+    if (windMap[index].x < 0 && windMap[index].y > 0)
+    {
+        Diff = findDiff(map[index], map[topR]);
+        if (Diff >= 0)
+        {
+            map[index] -= amplitude * (windMap[index].z / 100);
+            map[topL] += amplitude * (windMap[index].z / 100);
+            windMap[index].z += 2 * (windMap[index].z / 10);
+            windMap[top].z += 2 * (windMap[index].z / 10);
+            windMap[topL].z += 2 * (windMap[index].z / 10);
+            windMap[Left].z += 2 * (windMap[index].z / 10);
+        }
+        if (Diff < 0)
+        {
+            map[index] += amplitude * (windMap[index].z / 100);
+            windMap[index] -= amplitude * (windMap[index].z / 10);
+            windMap[top].z += 2 * (windMap[index].z / 10);
+            windMap[Left].z += 2 * (windMap[index].z / 10);
+        }
+    }
+}
